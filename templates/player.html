@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>じゃんけん大会 プレイヤー</title>
+</head>
+<body>
+    <h1>じゃんけん大会 プレイヤー</h1>
+    <p>あなたのID: <span id="playerId"></span></p>
+    <div>
+        <button onclick="play('rock')">グー</button>
+        <button onclick="play('paper')">パー</button>
+        <button onclick="play('scissors')">チョキ</button>
+    </div>
+    <p>司会者の手: <span id="hostChoice"></span></p>
+    <p>結果: <span id="result"></span></p>
+    <p>あなたのスコア: <span id="score"></span></p>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const playerId = document.getElementById('playerId').innerText;
+
+        function play(choice) {
+            socket.emit('play', {'player_id': playerId, 'choice': choice});
+        }
+
+        socket.on('result', function(data) {
+            if (data.player_id === playerId) {
+                document.getElementById('hostChoice').innerText = data.host_choice;
+                document.getElementById('result').innerText = data.result === 'win' ? '勝ち' : (data.result === 'tie' ? 'あいこ' : '負け');
+                document.getElementById('score').innerText = data.scores[playerId];
+            }
+        });
+
+        socket.on('reset_scores', function(data) {
+            document.getElementById('score').innerText = data.scores[playerId];
+        });
+
+        // URLからクエリパラメータを取得する
+        function getQueryParam(param) {
+            var searchParams = new URLSearchParams(window.location.search);
+            return searchParams.get(param);
+        }
+
+        // player_idを表示する
+        document.getElementById('playerId').textContent = getQueryParam('player_id');
+    </script>
+</body>
+</html>

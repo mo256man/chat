@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>じゃんけん大会 司会者</title>
+</head>
+<body>
+    <h1>じゃんけん大会 司会者</h1>
+    <div>
+        <button onclick="hostPlay('rock')">グー</button>
+        <button onclick="hostPlay('paper')">パー</button>
+        <button onclick="hostPlay('scissors')">チョキ</button>
+    </div>
+    <button id="resetButton">リセット</button>
+    <p>回数: <span id="rounds">0</span></p>
+    <p>スコア:</p>
+    <ul id="scores"></ul>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        function hostPlay(choice) {
+            socket.emit('host play', {choice: choice});
+        }
+
+        document.getElementById('resetButton').addEventListener('click', function() {
+            socket.emit('reset');
+        });
+
+        socket.on('update scores', function(data) {
+            document.getElementById('rounds').innerText = data.rounds;
+            updateScores(data.scores);
+        });
+
+        socket.on('reset scores', function(data) {
+            document.getElementById('rounds').innerText = data.rounds;
+            updateScores(data.scores);
+        });
+
+        function updateScores(scores) {
+            const scoresList = document.getElementById('scores');
+            scoresList.innerHTML = '';
+            for (const [playerId, score] of Object.entries(scores)) {
+                const listItem = document.createElement('li');
+                listItem.textContent = `プレイヤー ${playerId}: ${score}`;
+                scoresList.appendChild(listItem);
+            }
+        }
+    </script>
+</body>
+</html>

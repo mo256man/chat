@@ -1,0 +1,76 @@
+<!-- index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
+    <script>
+        var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+
+        // 参加者リストを更新する関数
+        function updateClientsList(clientsList) {
+            var clientsContainer = document.getElementById('clients-container');
+            clientsContainer.innerHTML = ''; // 参加者リストをクリア
+            clientsList.forEach(function(client) {
+                clientsContainer.innerHTML += '<li>' + client + '</li>'; // 参加者を表示
+            });
+        }
+
+        // ページがロードされた時に参加者リストを要求する
+        window.onload = function() {
+            socket.emit('get_clients');
+        };
+
+        // チャットに参加する関数
+        function joinChat() {
+            var username = document.getElementById('username').value;
+            socket.emit('join', {'username': username});
+        }
+
+        // メッセージを送信する関数
+        function sendMessage() {
+            var sender = document.getElementById('username').value;
+            var receiver = document.getElementById('receiver').value;
+            var message = document.getElementById('message').value;
+            socket.emit('send_message', {'sender': sender, 'receiver': receiver, 'message': message});
+            document.getElementById('message').value = ''; // メッセージ入力欄をクリア
+        }
+
+        // チャットから退出する関数
+        function leaveChat() {
+            var username = document.getElementById('username').value;
+            socket.emit('leave', {'username': username});
+        }
+
+        // チャット更新時の処理
+        socket.on('update_chat', function(data) {
+            var message = data['message'];
+            var chatHistory = document.getElementById('chat-history');
+            chatHistory.innerHTML += '<li>' + message + '</li>';
+        });
+
+        // 参加者リストの更新処理
+        socket.on('update_clients', function(data) {
+            var clientsList = data['clients'];
+            updateClientsList(clientsList); // 参加者リストを更新
+        });
+    </script>
+</head>
+<body>
+    <h1>Chat App</h1>
+    <input type="text" id="username" placeholder="Enter your username">
+    <input type="text" id="receiver" placeholder="Enter receiver username">
+    <button onclick="joinChat()">Join Chat</button>
+    <hr>
+    <h2>Participants:</h2>
+    <ul id="clients-container"></ul> <!-- 参加者リストを表示する要素 -->
+    <hr>
+    <ul id="chat-history"></ul>
+    <input type="text" id="message" placeholder="Type your message">
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="leaveChat()">Leave Chat</button>
+</body>
+</html>
